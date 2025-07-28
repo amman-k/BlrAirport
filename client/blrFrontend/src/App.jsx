@@ -1,24 +1,25 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import Navbar from './components/Navbar';
-import TransportWidget from './components/TransportWidget';
-import TrafficWidget from './components/TrafficWidget';
-import FlightDetailModal from './components/FlightDetailModal';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import Navbar from "./components/Navbar";
+import TransportWidget from "./components/TransportWidget";
+import TrafficWidget from "./components/TrafficWidget";
+import FlightDetailModal from "./components/FlightDetailModal";
+import { useMemo } from "react";
 
 function App() {
-  
   const [arrivals, setArrivals] = useState([]);
   const [departures, setDepartures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFlight, setSelectedFlight] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchAllFlightData = async () => {
       try {
         const [arrivalsRes, departuresRes] = await Promise.all([
-          axios.get('/api/flights/arrivals'),
-          axios.get('/api/flights/departures')
+          axios.get("/api/flights/arrivals"),
+          axios.get("/api/flights/departures"),
         ]);
 
         if (Array.isArray(arrivalsRes.data)) {
@@ -27,10 +28,10 @@ function App() {
         if (Array.isArray(departuresRes.data)) {
           setDepartures(departuresRes.data);
         }
-        
+
         setError(null);
       } catch (err) {
-        setError('Failed to fetch flight data.');
+        setError("Failed to fetch flight data.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -39,7 +40,30 @@ function App() {
     fetchAllFlightData();
   }, []);
 
-  
+  const filteredArrivals = useMemo(() => {
+    if (!searchTerm) return arrivals;
+    return arrivals.filter(
+      (flight) =>
+        flight.airline.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        flight.flight.iata?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        flight.departure.airport
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase())
+    );
+  }, [arrivals, searchTerm]);
+
+  const filteredDepartures = useMemo(() => {
+    if (!searchTerm) return departures;
+    return departures.filter(
+      (flight) =>
+        flight.airline.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        flight.flight.iata?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        flight.departure.airport
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase())
+    );
+  }, [departures, searchTerm]);
+
   const handleFlightClick = (flight) => {
     setSelectedFlight(flight);
   };
@@ -60,6 +84,17 @@ function App() {
           </div>
         </section>
 
+        {/* --- SEARCH BAR SECTION --- */}
+        <section id="search-section" className="mb-8">
+          <input 
+            type="text"
+            placeholder="Search by airline, flight no., or city..."
+            className="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </section>
+
         <section id="flight-hub">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
@@ -68,9 +103,9 @@ function App() {
               <h2 className="text-xl md:text-2xl font-bold text-slate-100 mb-4">Live Arrivals 🛬</h2>
               {loading && <p className="text-slate-400">Loading...</p>}
               {error && <p className="text-red-400 font-semibold">{error}</p>}
-              {arrivals.length > 0 ? (
+              {filteredArrivals.length > 0 ? (
                 <ul className="divide-y divide-slate-700">
-                  {arrivals.map((flight, index) => (
+                  {filteredArrivals.map((flight, index) => (
                     <li 
                       key={`arr-${index}`} 
                       className="py-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50 -mx-4 px-4 rounded-md transition-colors"
@@ -88,7 +123,7 @@ function App() {
                     </li>
                   ))}
                 </ul>
-              ) : (!loading && <p className="text-slate-400">No arrival data available.</p>)}
+              ) : (!loading && <p className="text-slate-400">No matching flights found.</p>)}
             </div>
 
             {/* Departures Card */}
@@ -96,9 +131,9 @@ function App() {
               <h2 className="text-xl md:text-2xl font-bold text-slate-100 mb-4">Live Departures 🛫</h2>
               {loading && <p className="text-slate-400">Loading...</p>}
               {error && <p className="text-red-400 font-semibold">{error}</p>}
-              {departures.length > 0 ? (
+              {filteredDepartures.length > 0 ? (
                 <ul className="divide-y divide-slate-700">
-                  {departures.map((flight, index) => (
+                  {filteredDepartures.map((flight, index) => (
                     <li 
                       key={`dep-${index}`} 
                       className="py-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50 -mx-4 px-4 rounded-md transition-colors"
@@ -116,7 +151,7 @@ function App() {
                     </li>
                   ))}
                 </ul>
-              ) : (!loading && <p className="text-slate-400">No departure data available.</p>)}
+              ) : (!loading && <p className="text-slate-400">No matching flights found.</p>)}
             </div>
 
           </div>
