@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './components/Navbar';
@@ -7,6 +6,7 @@ import TrafficWidget from './components/TrafficWidget';
 import FlightDetailModal from './components/FlightDetailModal';
 
 function App() {
+  
   const [arrivals, setArrivals] = useState([]);
   const [departures, setDepartures] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,11 +20,18 @@ function App() {
           axios.get('/api/flights/arrivals'),
           axios.get('/api/flights/departures')
         ]);
-        if (Array.isArray(arrivalsRes.data)) setArrivals(arrivalsRes.data);
-        if (Array.isArray(departuresRes.data)) setDepartures(departuresRes.data);
+
+        if (Array.isArray(arrivalsRes.data)) {
+          setArrivals(arrivalsRes.data);
+        }
+        if (Array.isArray(departuresRes.data)) {
+          setDepartures(departuresRes.data);
+        }
+        
         setError(null);
       } catch (err) {
         setError('Failed to fetch flight data.');
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -32,6 +39,7 @@ function App() {
     fetchAllFlightData();
   }, []);
 
+  
   const handleFlightClick = (flight) => {
     setSelectedFlight(flight);
   };
@@ -58,11 +66,16 @@ function App() {
             {/* Arrivals Card */}
             <div className="bg-slate-800 shadow-md rounded-lg p-4 md:p-6 border border-slate-700">
               <h2 className="text-xl md:text-2xl font-bold text-slate-100 mb-4">Live Arrivals 🛬</h2>
-              {/* ... loading and error states */}
+              {loading && <p className="text-slate-400">Loading...</p>}
+              {error && <p className="text-red-400 font-semibold">{error}</p>}
               {arrivals.length > 0 ? (
                 <ul className="divide-y divide-slate-700">
                   {arrivals.map((flight, index) => (
-                    <li key={`arr-${index}`} className="py-3 flex justify-between items-center">
+                    <li 
+                      key={`arr-${index}`} 
+                      className="py-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50 -mx-4 px-4 rounded-md transition-colors"
+                      onClick={() => handleFlightClick(flight)}
+                    >
                       <div>
                         <p className="font-mono text-slate-100 font-semibold">
                           {flight.airline.name} {flight.flight.iata}
@@ -81,11 +94,16 @@ function App() {
             {/* Departures Card */}
             <div className="bg-slate-800 shadow-md rounded-lg p-4 md:p-6 border border-slate-700">
               <h2 className="text-xl md:text-2xl font-bold text-slate-100 mb-4">Live Departures 🛫</h2>
-              {/* ... loading and error states */}
+              {loading && <p className="text-slate-400">Loading...</p>}
+              {error && <p className="text-red-400 font-semibold">{error}</p>}
               {departures.length > 0 ? (
                 <ul className="divide-y divide-slate-700">
                   {departures.map((flight, index) => (
-                    <li key={`dep-${index}`} className="py-3 flex justify-between items-center">
+                    <li 
+                      key={`dep-${index}`} 
+                      className="py-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50 -mx-4 px-4 rounded-md transition-colors"
+                      onClick={() => handleFlightClick(flight)}
+                    >
                       <div>
                         <p className="font-mono text-slate-100 font-semibold">
                           {flight.airline.name} {flight.flight.iata}
@@ -104,6 +122,8 @@ function App() {
           </div>
         </section>
       </main>
+
+      <FlightDetailModal flight={selectedFlight} onClose={handleCloseModal} />
     </div>
   );
 }
