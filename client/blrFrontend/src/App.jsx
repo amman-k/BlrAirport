@@ -5,12 +5,14 @@ import TransportWidget from "./components/TransportWidget";
 import TrafficWidget from "./components/TrafficWidget";
 import FlightDetailModal from "./components/FlightDetailModal";
 import { useMemo } from "react";
+import AirlineLogo from './components/AirlineLogo';
 
 function App() {
   const [arrivals, setArrivals] = useState([]);
   const [departures, setDepartures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdated,setLastUpdated]=useState(null);
   const [selectedFlight, setSelectedFlight] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -38,6 +40,8 @@ function App() {
       }
     };
     fetchAllFlightData();
+    const intervalId=setInterval(fetchAllFlightData,120000);
+    return ()=>clearInterval(intervalId);
   }, []);
 
   const filteredArrivals = useMemo(() => {
@@ -72,6 +76,11 @@ function App() {
     setSelectedFlight(null);
   };
 
+  const formatLastUpdated=(date)=>{
+    if(!date) return ''
+    return `Last updated: ${date.toLocaleTimeString()}`;
+  }
+
   return (
     <div className="bg-slate-900 text-slate-300 min-h-screen font-sans">
       <Navbar />
@@ -84,7 +93,6 @@ function App() {
           </div>
         </section>
 
-        {/* --- SEARCH BAR SECTION --- */}
         <section id="search-section" className="mb-8">
           <input 
             type="text"
@@ -96,6 +104,10 @@ function App() {
         </section>
 
         <section id="flight-hub">
+          {/* Last Updated Timestamp */}
+          <div className="text-right text-xs text-slate-500 mb-2">
+            {formatLastUpdated(lastUpdated)}
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Arrivals Card */}
@@ -111,7 +123,8 @@ function App() {
                       className="py-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50 -mx-4 px-4 rounded-md transition-colors"
                       onClick={() => handleFlightClick(flight)}
                     >
-                      <div>
+                      <div className="flex items-center space-x-4">
+                        <AirlineLogo airlineName={flight.airline.name} />
                         <p className="font-mono text-slate-100 font-semibold">
                           {flight.airline.name} {flight.flight.iata}
                         </p>
@@ -139,7 +152,8 @@ function App() {
                       className="py-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50 -mx-4 px-4 rounded-md transition-colors"
                       onClick={() => handleFlightClick(flight)}
                     >
-                      <div>
+                      <div className="flex items-center space-x-4">
+                        <AirlineLogo airlineName={flight.airline.name} />
                         <p className="font-mono text-slate-100 font-semibold">
                           {flight.airline.name} {flight.flight.iata}
                         </p>
