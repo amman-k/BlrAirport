@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import Navbar from './components/Navbar';
@@ -7,6 +8,8 @@ import FlightDetailModal from './components/FlightDetailModal';
 import Directory from './components/Directory';
 import Footer from './components/Footer';
 import FlightCard from './components/FlightCard';
+import FlightListSkeleton from './components/FlightListSkeleton';
+import WeatherForecast from './components/WeatherForecast';
 
 function App() {
   const [arrivals, setArrivals] = useState([]);
@@ -15,14 +18,15 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-
   const [selectedFlight, setSelectedFlight] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchAllFlightData = async () => {
-      if (loading) setLoading(true); 
+      if (!loading) { 
+        console.log('Auto-refreshing flight data...');
+      }
       try {
         const [arrivalsRes, departuresRes] = await Promise.all([
           axios.get('/api/flights/arrivals'),
@@ -36,7 +40,8 @@ function App() {
         setError('Failed to fetch flight data. You may have hit the API rate limit.');
         console.error(err);
       } finally {
-        setLoading(false);
+
+        if (loading) setLoading(false);
       }
     };
 
@@ -46,6 +51,7 @@ function App() {
     return () => clearInterval(intervalId);
   }, []);
 
+  
   const filteredArrivals = useMemo(() => {
     if (!searchTerm) return arrivals;
     return arrivals.filter(flight => 
@@ -64,7 +70,7 @@ function App() {
     );
   }, [departures, searchTerm]);
 
-
+  // Handlers for opening and closing the modal
   const handleFlightClick = (flight) => {
     setSelectedFlight(flight);
   };
@@ -73,7 +79,7 @@ function App() {
     setSelectedFlight(null);
   };
 
-
+  // Helper to format the last updated time
   const formatLastUpdated = (date) => {
     if (!date) return '';
     return `Last updated: ${date.toLocaleTimeString()}`;
@@ -89,6 +95,11 @@ function App() {
             <TransportWidget />
           </div>
         </section>
+
+        <section id="weather-forecast" className="mb-8">
+          <WeatherForecast />
+        </section>
+
         <section id="search-section" className="mb-8">
           <input 
             type="text"
@@ -107,38 +118,42 @@ function App() {
             {/* Arrivals Card */}
             <div className="bg-slate-800 shadow-md rounded-lg p-4 md:p-6 border border-slate-700">
               <h2 className="text-xl md:text-2xl font-bold text-slate-100 mb-4">Live Arrivals 🛬</h2>
-              {loading && <p className="text-slate-400">Loading...</p>}
-              {error && <p className="text-red-400 font-semibold">{error}</p>}
-              {filteredArrivals.length > 0 ? (
-                <ul className="divide-y divide-slate-700">
-                  {filteredArrivals.map((flight, index) => (
-                    <FlightCard 
-                      key={`arr-${index}`}
-                      flight={flight}
-                      onFlightClick={handleFlightClick}
-                      type="arrival"
-                    />
-                  ))}
-                </ul>
-              ) : (!loading && <p className="text-slate-400">No matching flights found.</p>)}
+              {loading ? <FlightListSkeleton /> : (
+                error ? <p className="text-red-400 font-semibold">{error}</p> : (
+                  filteredArrivals.length > 0 ? (
+                    <ul className="divide-y divide-slate-700">
+                      {filteredArrivals.map((flight, index) => (
+                        <FlightCard 
+                          key={`arr-${index}`}
+                          flight={flight}
+                          onFlightClick={handleFlightClick}
+                          type="arrival"
+                        />
+                      ))}
+                    </ul>
+                  ) : (<p className="text-slate-400">No matching flights found.</p>)
+                )
+              )}
             </div>
             {/* Departures Card */}
             <div className="bg-slate-800 shadow-md rounded-lg p-4 md:p-6 border border-slate-700">
               <h2 className="text-xl md:text-2xl font-bold text-slate-100 mb-4">Live Departures 🛫</h2>
-              {loading && <p className="text-slate-400">Loading...</p>}
-              {error && <p className="text-red-400 font-semibold">{error}</p>}
-              {filteredDepartures.length > 0 ? (
-                <ul className="divide-y divide-slate-700">
-                  {filteredDepartures.map((flight, index) => (
-                     <FlightCard 
-                      key={`dep-${index}`}
-                      flight={flight}
-                      onFlightClick={handleFlightClick}
-                      type="departure"
-                    />
-                  ))}
-                </ul>
-              ) : (!loading && <p className="text-slate-400">No matching flights found.</p>)}
+              {loading ? <FlightListSkeleton /> : (
+                error ? <p className="text-red-400 font-semibold">{error}</p> : (
+                  filteredDepartures.length > 0 ? (
+                    <ul className="divide-y divide-slate-700">
+                      {filteredDepartures.map((flight, index) => (
+                         <FlightCard 
+                          key={`dep-${index}`}
+                          flight={flight}
+                          onFlightClick={handleFlightClick}
+                          type="departure"
+                        />
+                      ))}
+                    </ul>
+                  ) : (<p className="text-slate-400">No matching flights found.</p>)
+                )
+              )}
             </div>
           </div>
         </section>
