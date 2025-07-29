@@ -37,7 +37,7 @@ The dashboard is designed with a sleek, responsive, dark-mode interface, ensurin
 | **Frontend** | React (Vite), Tailwind CSS, `react-icons`, `date-fns`, `react-leaflet` |
 | **Backend** | Node.js, Express.js                                  |
 | **Database** | MongoDB with Mongoose (for future features)         |
-| **APIs** | AviationStack API (Flights), Google Maps API (Traffic) |
+| **APIs** | AviationStack API (Flights) |
 | **Utilities** | Axios, `dotenv`, `nodemon`, `cors`                   |
 
 ---
