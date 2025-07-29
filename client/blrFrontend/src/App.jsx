@@ -1,74 +1,79 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import Navbar from "./components/Navbar";
-import TransportWidget from "./components/TransportWidget";
-import TrafficWidget from "./components/TrafficWidget";
-import FlightDetailModal from "./components/FlightDetailModal";
-import { useMemo } from "react";
+// src/App.jsx
+import { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
+import Navbar from './components/Navbar';
+import TransportWidget from './components/TransportWidget';
+import TrafficWidget from './components/TrafficWidget';
+import FlightDetailModal from './components/FlightDetailModal';
 import AirlineLogo from './components/AirlineLogo';
 import Directory from './components/Directory';
+import FlightProgressBar from './components/FlightProgessBar';
+import FlightStatus from './components/FlightStatus';
+import Footer from './components/Footer';
 
 function App() {
+  // State for flight data
   const [arrivals, setArrivals] = useState([]);
   const [departures, setDepartures] = useState([]);
+  
+  // State for UI status
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastUpdated,setLastUpdated]=useState(null);
-  const [selectedFlight, setSelectedFlight] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [lastUpdated, setLastUpdated] = useState(null);
 
+  // State for the modal
+  const [selectedFlight, setSelectedFlight] = useState(null);
+
+  // State for the search term
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Fetch all data when the component mounts and set up auto-refresh
   useEffect(() => {
     const fetchAllFlightData = async () => {
+      if (loading) setLoading(true); 
       try {
         const [arrivalsRes, departuresRes] = await Promise.all([
-          axios.get("/api/flights/arrivals"),
-          axios.get("/api/flights/departures"),
+          axios.get('/api/flights/arrivals'),
+          axios.get('/api/flights/departures')
         ]);
-
-        if (Array.isArray(arrivalsRes.data)) {
-          setArrivals(arrivalsRes.data);
-        }
-        if (Array.isArray(departuresRes.data)) {
-          setDepartures(departuresRes.data);
-        }
-
+        if (Array.isArray(arrivalsRes.data)) setArrivals(arrivalsRes.data);
+        if (Array.isArray(departuresRes.data)) setDepartures(departuresRes.data);
+        setLastUpdated(new Date());
         setError(null);
       } catch (err) {
-        setError("Failed to fetch flight data.");
+        setError('Failed to fetch flight data. You may have hit the API rate limit.');
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchAllFlightData();
-    const intervalId=setInterval(fetchAllFlightData,900000);
-    return ()=>clearInterval(intervalId);
+    const intervalId = setInterval(fetchAllFlightData, 900000); // Refresh every 15 mins
+
+    return () => clearInterval(intervalId);
   }, []);
 
+  // Filtered lists using useMemo for performance
   const filteredArrivals = useMemo(() => {
     if (!searchTerm) return arrivals;
-    return arrivals.filter(
-      (flight) =>
-        flight.airline.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        flight.flight.iata?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        flight.departure.airport
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase())
+    return arrivals.filter(flight => 
+      (flight.airline.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (flight.flight.iata?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (flight.departure.airport?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [arrivals, searchTerm]);
 
   const filteredDepartures = useMemo(() => {
     if (!searchTerm) return departures;
-    return departures.filter(
-      (flight) =>
-        flight.airline.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        flight.flight.iata?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        flight.departure.airport
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase())
+    return departures.filter(flight => 
+      (flight.airline.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (flight.flight.iata?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (flight.arrival.airport?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [departures, searchTerm]);
 
+  // Handlers for opening and closing the modal
   const handleFlightClick = (flight) => {
     setSelectedFlight(flight);
   };
@@ -77,15 +82,16 @@ function App() {
     setSelectedFlight(null);
   };
 
-  const formatLastUpdated=(date)=>{
-    if(!date) return ''
+  // Helper to format the last updated time
+  const formatLastUpdated = (date) => {
+    if (!date) return '';
     return `Last updated: ${date.toLocaleTimeString()}`;
   }
 
   return (
-   <div className="bg-slate-900 text-slate-300 min-h-screen font-sans">
+    <div className="bg-slate-900 text-slate-300 min-h-screen font-sans flex flex-col">
       <Navbar />
-      <main className="container mx-auto p-4 md:p-8">
+      <main className="container mx-auto p-4 md:p-8 flex-grow">
         <section id="ground-transport" className="mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <TrafficWidget />
@@ -117,21 +123,26 @@ function App() {
                   {filteredArrivals.map((flight, index) => (
                     <li 
                       key={`arr-${index}`} 
-                      className="py-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50 -mx-4 px-4 rounded-md transition-colors"
+                      className="py-3 cursor-pointer"
                       onClick={() => handleFlightClick(flight)}
                     >
-                      <div className="flex items-center space-x-4">
-                        <AirlineLogo airlineName={flight.airline.name} />
-                        <div>
-                          <p className="font-mono text-slate-100 font-semibold">
-                            {flight.airline.name} {flight.flight.iata}
-                          </p>
-                          <p className="text-sm text-slate-400">From: {flight.departure.airport}</p>
+                      <div className="flex justify-between items-center hover:bg-slate-700/50 -mx-4 px-4 rounded-md py-2 transition-colors">
+                        <div className="flex items-center space-x-4">
+                          <AirlineLogo airlineName={flight.airline.name} />
+                          <div>
+                            <p className="font-mono text-slate-100 font-semibold">
+                              {flight.airline.name} {flight.flight.iata}
+                            </p>
+                            <p className="text-sm text-slate-400">From: {flight.departure.airport}</p>
+                          </div>
                         </div>
+                        <FlightStatus status={flight.flight_status} />
                       </div>
-                      <span className="text-xs md:text-sm font-medium bg-sky-900 text-sky-300 px-2 py-1 rounded-full whitespace-nowrap">
-                        {flight.flight_status}
-                      </span>
+                      <FlightProgressBar 
+                        departureTime={flight.departure.scheduled}
+                        arrivalTime={flight.arrival.scheduled}
+                        status={flight.flight_status}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -145,23 +156,28 @@ function App() {
               {filteredDepartures.length > 0 ? (
                 <ul className="divide-y divide-slate-700">
                   {filteredDepartures.map((flight, index) => (
-                    <li 
+                     <li 
                       key={`dep-${index}`} 
-                      className="py-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50 -mx-4 px-4 rounded-md transition-colors"
+                      className="py-3 cursor-pointer"
                       onClick={() => handleFlightClick(flight)}
                     >
-                      <div className="flex items-center space-x-4">
-                        <AirlineLogo airlineName={flight.airline.name} />
-                        <div>
-                          <p className="font-mono text-slate-100 font-semibold">
-                            {flight.airline.name} {flight.flight.iata}
-                          </p>
-                          <p className="text-sm text-slate-400">To: {flight.arrival.airport}</p>
+                      <div className="flex justify-between items-center hover:bg-slate-700/50 -mx-4 px-4 rounded-md py-2 transition-colors">
+                        <div className="flex items-center space-x-4">
+                          <AirlineLogo airlineName={flight.airline.name} />
+                          <div>
+                            <p className="font-mono text-slate-100 font-semibold">
+                              {flight.airline.name} {flight.flight.iata}
+                            </p>
+                            <p className="text-sm text-slate-400">To: {flight.arrival.airport}</p>
+                          </div>
                         </div>
+                        <FlightStatus status={flight.flight_status} />
                       </div>
-                      <span className="text-xs md:text-sm font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full whitespace-nowrap">
-                        {flight.flight_status}
-                      </span>
+                       <FlightProgressBar 
+                        departureTime={flight.departure.scheduled}
+                        arrivalTime={flight.arrival.scheduled}
+                        status={flight.flight_status}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -175,6 +191,7 @@ function App() {
         </section>
       </main>
       <FlightDetailModal flight={selectedFlight} onClose={handleCloseModal} />
+      <Footer />
     </div>
   );
 }
