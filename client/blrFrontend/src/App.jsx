@@ -6,6 +6,7 @@ import TrafficWidget from "./components/TrafficWidget";
 import FlightDetailModal from "./components/FlightDetailModal";
 import { useMemo } from "react";
 import AirlineLogo from './components/AirlineLogo';
+import Directory from './components/Directory';
 
 function App() {
   const [arrivals, setArrivals] = useState([]);
@@ -40,7 +41,7 @@ function App() {
       }
     };
     fetchAllFlightData();
-    const intervalId=setInterval(fetchAllFlightData,120000);
+    const intervalId=setInterval(fetchAllFlightData,900000);
     return ()=>clearInterval(intervalId);
   }, []);
 
@@ -82,9 +83,8 @@ function App() {
   }
 
   return (
-    <div className="bg-slate-900 text-slate-300 min-h-screen font-sans">
+   <div className="bg-slate-900 text-slate-300 min-h-screen font-sans">
       <Navbar />
-
       <main className="container mx-auto p-4 md:p-8">
         <section id="ground-transport" className="mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -92,7 +92,6 @@ function App() {
             <TransportWidget />
           </div>
         </section>
-
         <section id="search-section" className="mb-8">
           <input 
             type="text"
@@ -103,13 +102,11 @@ function App() {
           />
         </section>
 
-        <section id="flight-hub">
-          {/* Last Updated Timestamp */}
+        <section id="flight-hub" className="mb-8">
           <div className="text-right text-xs text-slate-500 mb-2">
             {formatLastUpdated(lastUpdated)}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
             {/* Arrivals Card */}
             <div className="bg-slate-800 shadow-md rounded-lg p-4 md:p-6 border border-slate-700">
               <h2 className="text-xl md:text-2xl font-bold text-slate-100 mb-4">Live Arrivals 🛬</h2>
@@ -125,10 +122,12 @@ function App() {
                     >
                       <div className="flex items-center space-x-4">
                         <AirlineLogo airlineName={flight.airline.name} />
-                        <p className="font-mono text-slate-100 font-semibold">
-                          {flight.airline.name} {flight.flight.iata}
-                        </p>
-                        <p className="text-sm text-slate-400">From: {flight.departure.airport}</p>
+                        <div>
+                          <p className="font-mono text-slate-100 font-semibold">
+                            {flight.airline.name} {flight.flight.iata}
+                          </p>
+                          <p className="text-sm text-slate-400">From: {flight.departure.airport}</p>
+                        </div>
                       </div>
                       <span className="text-xs md:text-sm font-medium bg-sky-900 text-sky-300 px-2 py-1 rounded-full whitespace-nowrap">
                         {flight.flight_status}
@@ -138,7 +137,6 @@ function App() {
                 </ul>
               ) : (!loading && <p className="text-slate-400">No matching flights found.</p>)}
             </div>
-
             {/* Departures Card */}
             <div className="bg-slate-800 shadow-md rounded-lg p-4 md:p-6 border border-slate-700">
               <h2 className="text-xl md:text-2xl font-bold text-slate-100 mb-4">Live Departures 🛫</h2>
@@ -154,10 +152,12 @@ function App() {
                     >
                       <div className="flex items-center space-x-4">
                         <AirlineLogo airlineName={flight.airline.name} />
-                        <p className="font-mono text-slate-100 font-semibold">
-                          {flight.airline.name} {flight.flight.iata}
-                        </p>
-                        <p className="text-sm text-slate-400">To: {flight.arrival.airport}</p>
+                        <div>
+                          <p className="font-mono text-slate-100 font-semibold">
+                            {flight.airline.name} {flight.flight.iata}
+                          </p>
+                          <p className="text-sm text-slate-400">To: {flight.arrival.airport}</p>
+                        </div>
                       </div>
                       <span className="text-xs md:text-sm font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full whitespace-nowrap">
                         {flight.flight_status}
@@ -167,11 +167,13 @@ function App() {
                 </ul>
               ) : (!loading && <p className="text-slate-400">No matching flights found.</p>)}
             </div>
-
           </div>
         </section>
-      </main>
 
+        <section id="directory">
+          <Directory />
+        </section>
+      </main>
       <FlightDetailModal flight={selectedFlight} onClose={handleCloseModal} />
     </div>
   );
