@@ -1,32 +1,24 @@
-// src/App.jsx
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import Navbar from './components/Navbar';
 import TransportWidget from './components/TransportWidget';
 import TrafficWidget from './components/TrafficWidget';
 import FlightDetailModal from './components/FlightDetailModal';
-import AirlineLogo from './components/AirlineLogo';
 import Directory from './components/Directory';
-import FlightProgressBar from './components/FlightProgessBar';
-import FlightStatus from './components/FlightStatus';
 import Footer from './components/Footer';
-import FlightTimeDisplay from './components/FlightTimeDisplay';
+import FlightCard from './components/FlightCard';
 
 function App() {
   const [arrivals, setArrivals] = useState([]);
   const [departures, setDepartures] = useState([]);
   
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-
   const [selectedFlight, setSelectedFlight] = useState(null);
 
-
   const [searchTerm, setSearchTerm] = useState('');
-
 
   useEffect(() => {
     const fetchAllFlightData = async () => {
@@ -72,6 +64,7 @@ function App() {
     );
   }, [departures, searchTerm]);
 
+
   const handleFlightClick = (flight) => {
     setSelectedFlight(flight);
   };
@@ -79,6 +72,7 @@ function App() {
   const handleCloseModal = () => {
     setSelectedFlight(null);
   };
+
 
   const formatLastUpdated = (date) => {
     if (!date) return '';
@@ -118,34 +112,12 @@ function App() {
               {filteredArrivals.length > 0 ? (
                 <ul className="divide-y divide-slate-700">
                   {filteredArrivals.map((flight, index) => (
-                    <li 
-                      key={`arr-${index}`} 
-                      className="py-3 cursor-pointer"
-                      onClick={() => handleFlightClick(flight)}
-                    >
-                      <div className="flex justify-between items-center hover:bg-slate-700/50 -mx-4 px-4 rounded-md py-2 transition-colors">
-                        <div className="flex items-center space-x-4">
-                          <AirlineLogo airlineName={flight.airline.name} />
-                          <div>
-                            <p className="font-mono text-slate-100 font-semibold">
-                              {flight.airline.name} {flight.flight.iata}
-                            </p>
-                            <p className="text-sm text-slate-400">From: {flight.departure.airport}</p>
-                          </div>
-                        </div>
-                        <FlightTimeDisplay 
-                          scheduled={flight.arrival.scheduled}
-                          estimated={flight.arrival.estimated}
-                          actual={flight.arrival.actual}
-                          type="arrival"
-                        />
-                      </div>
-                      <FlightProgressBar 
-                        departureTime={flight.departure.scheduled}
-                        arrivalTime={flight.arrival.scheduled}
-                        status={flight.flight_status}
-                      />
-                    </li>
+                    <FlightCard 
+                      key={`arr-${index}`}
+                      flight={flight}
+                      onFlightClick={handleFlightClick}
+                      type="arrival"
+                    />
                   ))}
                 </ul>
               ) : (!loading && <p className="text-slate-400">No matching flights found.</p>)}
@@ -158,34 +130,12 @@ function App() {
               {filteredDepartures.length > 0 ? (
                 <ul className="divide-y divide-slate-700">
                   {filteredDepartures.map((flight, index) => (
-                     <li 
-                      key={`dep-${index}`} 
-                      className="py-3 cursor-pointer"
-                      onClick={() => handleFlightClick(flight)}
-                    >
-                      <div className="flex justify-between items-center hover:bg-slate-700/50 -mx-4 px-4 rounded-md py-2 transition-colors">
-                        <div className="flex items-center space-x-4">
-                          <AirlineLogo airlineName={flight.airline.name} />
-                          <div>
-                            <p className="font-mono text-slate-100 font-semibold">
-                              {flight.airline.name} {flight.flight.iata}
-                            </p>
-                            <p className="text-sm text-slate-400">To: {flight.arrival.airport}</p>
-                          </div>
-                        </div>
-                        <FlightTimeDisplay 
-                          scheduled={flight.departure.scheduled}
-                          estimated={flight.departure.estimated}
-                          actual={flight.departure.actual}
-                          type="departure"
-                        />
-                      </div>
-                       <FlightProgressBar 
-                        departureTime={flight.departure.scheduled}
-                        arrivalTime={flight.arrival.scheduled}
-                        status={flight.flight_status}
-                      />
-                    </li>
+                     <FlightCard 
+                      key={`dep-${index}`}
+                      flight={flight}
+                      onFlightClick={handleFlightClick}
+                      type="departure"
+                    />
                   ))}
                 </ul>
               ) : (!loading && <p className="text-slate-400">No matching flights found.</p>)}
