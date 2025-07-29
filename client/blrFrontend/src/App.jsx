@@ -10,24 +10,24 @@ import Directory from './components/Directory';
 import FlightProgressBar from './components/FlightProgessBar';
 import FlightStatus from './components/FlightStatus';
 import Footer from './components/Footer';
+import FlightTimeDisplay from './components/FlightTimeDisplay';
 
 function App() {
-  // State for flight data
   const [arrivals, setArrivals] = useState([]);
   const [departures, setDepartures] = useState([]);
   
-  // State for UI status
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // State for the modal
+
   const [selectedFlight, setSelectedFlight] = useState(null);
 
-  // State for the search term
+
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch all data when the component mounts and set up auto-refresh
+
   useEffect(() => {
     const fetchAllFlightData = async () => {
       if (loading) setLoading(true); 
@@ -49,12 +49,11 @@ function App() {
     };
 
     fetchAllFlightData();
-    const intervalId = setInterval(fetchAllFlightData, 900000); // Refresh every 15 mins
+    const intervalId = setInterval(fetchAllFlightData, 900000);
 
     return () => clearInterval(intervalId);
   }, []);
 
-  // Filtered lists using useMemo for performance
   const filteredArrivals = useMemo(() => {
     if (!searchTerm) return arrivals;
     return arrivals.filter(flight => 
@@ -73,7 +72,6 @@ function App() {
     );
   }, [departures, searchTerm]);
 
-  // Handlers for opening and closing the modal
   const handleFlightClick = (flight) => {
     setSelectedFlight(flight);
   };
@@ -82,7 +80,6 @@ function App() {
     setSelectedFlight(null);
   };
 
-  // Helper to format the last updated time
   const formatLastUpdated = (date) => {
     if (!date) return '';
     return `Last updated: ${date.toLocaleTimeString()}`;
@@ -136,7 +133,12 @@ function App() {
                             <p className="text-sm text-slate-400">From: {flight.departure.airport}</p>
                           </div>
                         </div>
-                        <FlightStatus status={flight.flight_status} />
+                        <FlightTimeDisplay 
+                          scheduled={flight.arrival.scheduled}
+                          estimated={flight.arrival.estimated}
+                          actual={flight.arrival.actual}
+                          type="arrival"
+                        />
                       </div>
                       <FlightProgressBar 
                         departureTime={flight.departure.scheduled}
@@ -171,7 +173,12 @@ function App() {
                             <p className="text-sm text-slate-400">To: {flight.arrival.airport}</p>
                           </div>
                         </div>
-                        <FlightStatus status={flight.flight_status} />
+                        <FlightTimeDisplay 
+                          scheduled={flight.departure.scheduled}
+                          estimated={flight.departure.estimated}
+                          actual={flight.departure.actual}
+                          type="departure"
+                        />
                       </div>
                        <FlightProgressBar 
                         departureTime={flight.departure.scheduled}
